@@ -6,7 +6,7 @@ The menu bar shows the Clawd icon plus e.g. `42% · 2h13m` (session usage · tim
 
 ![ClawdMenu popover](screenshots/popover.png)
 
-*Rendered with demo data via `ClawdMenu --render-demo screenshots/popover.png`.*
+*Rendered with demo data via `ClawdMenu --lang en --render-demo screenshots/popover.png` (`--lang uk` for Ukrainian).*
 
 ## Features
 
@@ -15,6 +15,7 @@ The menu bar shows the Clawd icon plus e.g. `42% · 2h13m` (session usage · tim
 - Notifications at 80% and 95% of the session, and when the session resets
 - Configurable refresh interval (30 s, 1 min, 2 min, 5 min)
 - Launch at login toggle
+- English and Ukrainian UI: Ukrainian if any of the system's preferred languages is Ukrainian, English otherwise
 - Menu bar only: no Dock icon
 
 ## Requirements

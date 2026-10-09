@@ -2,6 +2,32 @@ import SwiftUI
 import ServiceManagement
 import UserNotifications
 
+// MARK: - Localization (укр, якщо серед мов системи є українська; інакше англійська)
+
+var lang = Locale.preferredLanguages.contains { $0.hasPrefix("uk") } ? "uk" : "en"
+let uk: [String: String] = [
+    "Session reset": "Сесію скинуто",
+    "The 5h limit is available again": "Ліміт 5h знову вільний",
+    "Claude: session %d%%": "Claude: сесія %d%%",
+    "Resets in %@": "Скидання через %@",
+    "resets in %@": "скидання через %@",
+    "Token not found in Keychain — sign in to Claude Code": "Токен не знайдено в Keychain — залогінься в Claude Code",
+    "Spend (overage)": "Витрати (overage)",
+    "Session (5h)": "Сесія (5h)",
+    "Week (7d)": "Тиждень (7d)",
+    "Status: %@": "Статус: %@",
+    "Refresh": "Оновлення",
+    "%d s": "%d с",
+    "Notifications (80/95% and reset)": "Сповіщення (80/95% і скидання)",
+    "Launch at login": "Запуск при вході",
+    "Refresh now": "Оновити",
+    "Quit": "Вийти",
+]
+func tr(_ key: String, _ args: CVarArg...) -> String {
+    let f = lang == "uk" ? uk[key] ?? key : key
+    return args.isEmpty ? f : String(format: f, arguments: args)
+}
+
 // MARK: - Model
 
 struct Usage {
@@ -51,11 +77,11 @@ final class Store: ObservableObject {
     private func check(_ u: Usage) {
         if u.session < lastSession - 20 {   // сесія скинулась
             notified.removeAll()
-            push("Сесію скинуто", "Ліміт 5h знову вільний")
+            push(tr("Session reset"), tr("The 5h limit is available again"))
         }
         for t in [80, 95] where u.session >= t && !notified.contains(t) {
             notified.insert(t)
-            push("Claude: сесія \(u.session)%", "Скидання через \(fmt(u.sessionReset))")
+            push(tr("Claude: session %d%%", u.session), tr("Resets in %@", fmt(u.sessionReset)))
         }
     }
 
@@ -87,7 +113,7 @@ func token() throws -> String {
         let m = String(s[r])
         return String(m.split(separator: "\"").last!)
     }
-    throw AppError(errorDescription: "Токен не знайдено в Keychain — залогінься в Claude Code")
+    throw AppError(errorDescription: tr("Token not found in Keychain — sign in to Claude Code"))
 }
 
 func fetch() async throws -> Usage {
@@ -126,7 +152,7 @@ struct Row: View {
             HStack { Text(label); Spacer(); Text("\(pct)%").monospacedDigit() }
             ProgressView(value: Double(min(pct, 100)), total: 100)
                 .tint(pct >= 95 ? .red : pct >= 80 ? .orange : .accentColor)
-            Text("скидання через \(fmt(reset))").font(.caption).foregroundStyle(.secondary)
+            Text(tr("resets in %@", fmt(reset))).font(.caption).foregroundStyle(.secondary)
         }
     }
 }
@@ -137,24 +163,24 @@ struct Panel: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             if let u = s.usage {
-                Row(label: u.enterprise ? "Витрати (overage)" : "Сесія (5h)", pct: u.session, reset: u.sessionReset)
-                if !u.enterprise { Row(label: "Тиждень (7d)", pct: u.week, reset: u.weekReset) }
-                Text("Статус: \(u.status)").font(.caption).foregroundStyle(.secondary)
+                Row(label: u.enterprise ? tr("Spend (overage)") : tr("Session (5h)"), pct: u.session, reset: u.sessionReset)
+                if !u.enterprise { Row(label: tr("Week (7d)"), pct: u.week, reset: u.weekReset) }
+                Text(tr("Status: %@", u.status)).font(.caption).foregroundStyle(.secondary)
             }
             if let e = s.error { Text(e).font(.caption).foregroundStyle(.red) }
             Divider()
-            Picker("Оновлення", selection: Binding(get: { s.interval }, set: { s.interval = $0; s.restart() })) {
-                ForEach([30.0, 60, 120, 300], id: \.self) { Text("\(Int($0)) с").tag($0) }
+            Picker(tr("Refresh"), selection: Binding(get: { s.interval }, set: { s.interval = $0; s.restart() })) {
+                ForEach([30.0, 60, 120, 300], id: \.self) { Text(tr("%d s", Int($0))).tag($0) }
             }
-            Toggle("Сповіщення (80/95% і скидання)", isOn: $s.notify)
-            Toggle("Запуск при вході", isOn: Binding(get: { login }, set: { on in
+            Toggle(tr("Notifications (80/95% and reset)"), isOn: $s.notify)
+            Toggle(tr("Launch at login"), isOn: Binding(get: { login }, set: { on in
                 do { on ? try SMAppService.mainApp.register() : try SMAppService.mainApp.unregister(); login = on }
                 catch { s.error = error.localizedDescription }
             }))
             HStack {
-                Button("Оновити") { Task { await s.refresh() } }
+                Button(tr("Refresh now")) { Task { await s.refresh() } }
                 Spacer()
-                Button("Вийти") { NSApplication.shared.terminate(nil) }
+                Button(tr("Quit")) { NSApplication.shared.terminate(nil) }
             }
         }
         .padding().frame(width: 280)
@@ -173,6 +199,7 @@ struct ClawdMenuApp: App {
     init() {
         // `ClawdMenu --render-demo out.png`: рендерить popover з демо-даними для README і виходить
         let a = CommandLine.arguments
+        if let l = a.firstIndex(of: "--lang"), l + 1 < a.count { lang = a[l + 1] }
         guard let i = a.firstIndex(of: "--render-demo"), i + 1 < a.count else { return }
         let demo = Usage(session: 42, sessionReset: 133, week: 17, weekReset: 4300, status: "allowed")
         let view = Panel(s: Store(demo: demo)).background(Color(nsColor: .windowBackgroundColor))
