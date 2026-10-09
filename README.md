@@ -4,6 +4,10 @@ A tiny macOS menu bar app that shows your Claude Code usage: the 5-hour session,
 
 The menu bar shows the Clawd icon plus e.g. `42% · 2h13m` (session usage · time until reset). Click it for the details.
 
+![ClawdMenu popover](screenshots/popover.png)
+
+*Rendered with demo data via `ClawdMenu --render-demo screenshots/popover.png`.*
+
 ## Features
 
 - Session (5h) and weekly (7d) usage with progress bars and reset countdowns

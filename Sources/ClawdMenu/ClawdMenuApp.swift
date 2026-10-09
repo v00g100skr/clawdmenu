@@ -21,7 +21,8 @@ final class Store: ObservableObject {
     private var lastSession = 0
     private var timer: Timer?
 
-    init() {
+    init(demo: Usage? = nil) {
+        if let demo { usage = demo; return }
         restart()
     }
 
@@ -169,6 +170,24 @@ let menuIcon: NSImage = {
 @main
 struct ClawdMenuApp: App {
     @StateObject private var store = Store()
+    init() {
+        // `ClawdMenu --render-demo out.png`: рендерить popover з демо-даними для README і виходить
+        let a = CommandLine.arguments
+        guard let i = a.firstIndex(of: "--render-demo"), i + 1 < a.count else { return }
+        let demo = Usage(session: 42, sessionReset: 133, week: 17, weekReset: 4300, status: "allowed")
+        let view = Panel(s: Store(demo: demo)).background(Color(nsColor: .windowBackgroundColor))
+            .environment(\.colorScheme, .dark)
+        let host = NSHostingView(rootView: view)
+        host.frame = NSRect(origin: .zero, size: host.fittingSize)
+        let w = NSWindow(contentRect: host.frame, styleMask: .borderless, backing: .buffered, defer: false)
+        w.appearance = NSAppearance(named: .darkAqua); w.contentView = host
+        host.layoutSubtreeIfNeeded()
+        if let rep = host.bitmapImageRepForCachingDisplay(in: host.bounds) {
+            host.cacheDisplay(in: host.bounds, to: rep)
+            try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: a[i + 1]))
+        }
+        exit(0)
+    }
     var body: some Scene {
         MenuBarExtra {
             Panel(s: store)
