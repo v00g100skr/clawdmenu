@@ -21,12 +21,51 @@ The menu bar shows the Clawd icon plus e.g. `42% · 2h13m` (session usage · tim
 
 ## Build and run
 
+1. Install the Swift toolchain if missing: `xcode-select --install` (or Xcode).
+2. Sign in to Claude Code at least once (`claude` → `/login`) so the Keychain entry exists.
+3. Build:
+
+   ```bash
+   git clone <this repo> && cd clawdmeter_macos_menu
+   ./build.sh
+   ```
+
+   `build.sh` runs `swift build -c release`, assembles `ClawdMenu.app` (Info.plist, icon, menu bar sprite) and ad-hoc signs it. The first build takes about a minute.
+4. Run:
+
+   ```bash
+   open ClawdMenu.app
+   ```
+
+   The Clawd icon appears in the menu bar (no Dock icon). Approve the Keychain prompt with *Always Allow* and the notification prompt when it appears.
+
+### Install permanently
+
 ```bash
-./build.sh
-open ClawdMenu.app
+cp -R ClawdMenu.app /Applications/
+open /Applications/ClawdMenu.app
 ```
 
-`build.sh` runs `swift build -c release`, assembles `ClawdMenu.app` (Info.plist, icon, menu bar sprite) and ad-hoc signs it.
+Then enable *Launch at login* in the popover.
+
+### Stop / rebuild
+
+```bash
+pkill ClawdMenu          # quit (or use "Quit" in the popover)
+./build.sh && open ClawdMenu.app   # rebuild and relaunch
+```
+
+### Run from source (debugging)
+
+```bash
+swift run -c release     # binary runs without the bundle: no icon/notifications
+```
+
+Crash reports land in `~/Library/Logs/DiagnosticReports/ClawdMenu-*.ips`.
+
+### Gatekeeper
+
+If you copy the built app to another Mac, macOS may block it (ad-hoc signature). Right-click → *Open*, or run `xattr -dr com.apple.quarantine ClawdMenu.app`.
 
 ## How it works
 
