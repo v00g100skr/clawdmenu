@@ -30,7 +30,7 @@ The menu bar shows the Clawd icon plus e.g. `42% · 2h13m` (session usage · tim
 3. Build:
 
    ```bash
-   git clone <this repo> && cd clawdmeter_macos_menu
+   git clone https://github.com/v00g100skr/clawdmenu.git && cd clawdmenu
    ./build.sh
    ```
 
